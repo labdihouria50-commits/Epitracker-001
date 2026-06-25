@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EpiTracker – Global Disease File Catalog</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --navy: #0a1628;
+    --navy2: #0f2040;
+    --navy3: #152a55;
+    --mint: #00e5b0;
+    --mint2: #00c49a;
+    --mint3: #00ffc8;
+    --cyan: #00b4d8;
+    --red: #e63946;
+    --white: #f0f6ff;
+    --gray: #8aa0c0;
+    --card: rgba(15,32,64,0.85);
+    --glass: rgba(0,229,176,0.07);
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;}
+
+  /* ── NAVBAR ── */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:1000;
+    background:rgba(10,22,40,0.95);backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(0,229,176,0.15);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 clamp(1rem,4vw,3rem);height:64px;
+  }
+  .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .nav-logo-icon{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--mint),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .nav-logo-text{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:1px;}
+  .nav-logo-text span{color:var(--mint);}
+  .nav-links{display:flex;gap:1.5rem;align-items:center;}
+  .nav-links a{color:var(--gray);text-decoration:none;font-size:.9rem;font-weight:500;transition:color .2s;}
+  .nav-links a:hover{color:var(--mint);}
+  .btn-admin{background:transparent;border:1px solid var(--mint);color:var(--mint);padding:.4rem .9rem;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s;font-family:'Inter',sans-serif;}
+  .btn-admin:hover{background:var(--mint);color:var(--navy);}
+  .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
+  .hamburger span{display:block;width:24px;height:2px;background:var(--white);border-radius:2px;transition:all .3s;}
+
+  /* ── HERO ── */
+  #home{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:80px clamp(1rem,5vw,4rem) 3rem;
+    background:radial-gradient(ellipse at 60% 40%, rgba(0,180,216,0.12) 0%, transparent 60%),
+               radial-gradient(ellipse at 20% 80%, rgba(0,229,176,0.08) 0%, transparent 50%),
+               var(--navy);
+    text-align:center;position:relative;overflow:hidden;
+  }
+  .hero-pulse{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:600px;height:600px;border-radius:50%;
+    border:1px solid rgba(0,229,176,0.08);
+    animation:pulse 4s ease-in-out infinite;pointer-events:none;
+  }
+  .hero-pulse::before{
+    content:'';position:absolute;top:15%;left:15%;right:15%;bottom:15%;
+    border-radius:50%;border:1px solid rgba(0,229,176,0.12);
+  }
+  @keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6;}50%{transform:translate(-50%,-50%) scale(1.05);opacity:1;}}
+  .hero-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(0,229,176,0.1);border:1px solid rgba(0,229,176,0.3);
+    border-radius:20px;padding:.35rem .9rem;margin-bottom:1.5rem;
+    font-size:.8rem;font-weight:600;color:var(--mint);letter-spacing:.5px;
+  }
+  .hero-badge::before{content:'';width:8px;height:8px;background:var(--mint);border-radius:50%;animation:blink 1.5s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+  h1{font-family:'Rajdhani',sans-serif;font-size:clamp(2.4rem,6vw,4rem);font-weight:700;line-height:1.1;margin-bottom:1rem;}
+  h1 .accent{color:var(--mint);}
+  .hero-sub{font-size:clamp(.95rem,2vw,1.15rem);color:var(--gray);max-width:560px;line-height:1.7;margin-bottom:2.5rem;}
+
+  /* ── SEARCH ── */
+  .search-wrap{width:100%;max-width:640px;position:relative;margin-bottom:2rem;}
+  .search-wrap input{
+    width:100%;padding:.9rem 1.2rem .9rem 3.2rem;
+    background:rgba(15,32,64,0.9);border:1px solid rgba(0,229,176,0.25);
+    border-radius:12px;color:var(--white);font-size:1rem;font-family:'Inter',sans-serif;
+    outline:none;transition:border-color .2s,box-shadow .2s;
+  }
+  .search-wrap input:focus{border-color:var(--mint);box-shadow:0 0 0 3px rgba(0,229,176,0.1);}
+  .search-wrap input::placeholder{color:var(--gray);}
+  .search-icon{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:var(--mint);font-size:1.1rem;}
+  .filter-row{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;}
+  .filter-btn{
+    background:rgba(15,32,64,0.7);border:1px solid rgba(0,229,176,0.2);
+    color:var(--gray);padding:.4rem .9rem;border-radius:20px;cursor:pointer;
+    font-size:.82rem;font-weight:500;transition:all .2s;font-family:'Inter',sans-serif;
+  }
+  .filter-btn.active,.filter-btn:hover{background:var(--mint);border-color:var(--mint);color:var(--navy);}
+
+  /* ── STATS ── */
+  .stats-bar{
+    display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;
+    padding:1.5rem 0 0;border-top:1px solid rgba(0,229,176,0.1);
+    width:100%;max-width:600px;margin-top:1rem;
+  }
+  .stat{text-align:center;}
+  .stat-num{font-family:'Rajdhani',sans-serif;font-size:1.8rem;font-weight:700;color:var(--mint);}
+  .stat-lbl{font-size:.75rem;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;}
+
+  /* ── SECTION ── */
+  section{padding:5rem clamp(1rem,5vw,4rem);}
+  .section-header{text-align:center;margin-bottom:3rem;}
+  .eyebrow{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--mint);margin-bottom:.6rem;}
+  h2{font-family:'Rajdhani',sans-serif;font-size:clamp(1.8rem,4vw,2.6rem);font-weight:700;}
+  h2 span{color:var(--mint);}
+
+  /* ── FILES GRID ── */
+  #catalog{background:var(--navy2);}
+  .files-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:1.2rem;max-width:1200px;margin:0 auto;
+  }
+  .file-card{
+    background:var(--card);border:1px solid rgba(0,229,176,0.12);
+    border-radius:14px;padding:1.4rem;cursor:pointer;
+    transition:all .25s;position:relative;overflow:hidden;
+  }
+  .file-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--mint),var(--cyan));
+    transform:scaleX(0);transform-origin:left;transition:transform .3s;
+  }
+  .file-card:hover{border-color:rgba(0,229,176,0.4);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,229,176,0.1);}
+  .file-card:hover::before{transform:scaleX(1);}
+  .file-type-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:.25rem .6rem;border-radius:6px;font-size:.72rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.5px;margin-bottom:.8rem;
+  }
+  .badge-pdf{background:rgba(230,57,70,0.15);color:#ff6b7a;border:1px solid rgba(230,57,70,0.3);}
+  .badge-ppt{background:rgba(255,140,0,0.15);color:#ffaa00;border:1px solid rgba(255,140,0,0.3);}
+  .badge-xls{background:rgba(0,229,176,0.15);color:var(--mint);border:1px solid rgba(0,229,176,0.3);}
+  .file-title{font-weight:600;font-size:1rem;margin-bottom:.4rem;line-height:1.3;}
+  .file-desc{font-size:.82rem;color:var(--gray);line-height:1.5;margin-bottom:1rem;}
+  .file-meta{display:flex;align-items:center;justify-content:space-between;margin-top:.5rem;}
+  .file-price{font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;color:var(--mint);}
+  .btn-order{
+    background:linear-gradient(135deg,var(--mint),var(--cyan));
+    border:none;color:var(--navy);padding:.4rem .9rem;border-radius:8px;
+    font-weight:700;font-size:.82rem;cursor:pointer;transition:opacity .2s;
+    font-family:'Inter',sans-serif;
+  }
+  .btn-order:hover{opacity:.85;}
+  .no-results{text-align:center;padding:3rem;color:var(--gray);font-size:1rem;}
+
+  /* ── HOW IT WORKS ── */
+  #how{background:var(--navy);}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;max-width:900px;margin:0 auto;}
+  .step{text-align:center;padding:2rem 1rem;}
+  .step-icon{width:64px;height:64px;border-radius:50%;background:var(--glass);border:1px solid rgba(0,229,176,0.25);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 1rem;}
+  .step h3{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:.5rem;}
+  .step p{font-size:.85rem;color:var(--gray);line-height:1.6;}
+  .step-num{font-family:'Rajdhani',sans-serif;font-size:.75rem;color:var(--mint);font-weight:700;letter-spacing:1px;margin-bottom:.4rem;}
+
+  /* ── CONTACT ── */
+  #contact{background:var(--navy2);}
+  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;max-width:900px;margin:0 auto;}
+  .contact-info h3{font-family:'Rajdhani',sans-serif;font-size:1.5rem;margin-bottom:1rem;color:var(--mint);}
+  .contact-item{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;}
+  .contact-item .ci-icon{width:38px;height:38px;border-radius:8px;background:var(--glass);border:1px solid rgba(0,229,176,0.2);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+  .contact-item a,.contact-item span{color:var(--gray);font-size:.9rem;text-decoration:none;}
+  .contact-item a:hover{color:var(--mint);}
+  .contact-form-box{background:var(--card);border:1px solid rgba(0,229,176,0.12);border-radius:16px;padding:2rem;}
+  .form-group{margin-bottom:1rem;}
+  .form-group label{display:block;font-size:.82rem;font-weight:600;color:var(--gray);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.5px;}
+  .form-group input,.form-group textarea,.form-group select{
+    width:100%;background:rgba(10,22,40,0.8);border:1px solid rgba(0,229,176,0.2);
+    border-radius:8px;padding:.7rem 1rem;color:var(--white);font-size:.9rem;
+    font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;
+  }
+  .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--mint);}
+  .form-group textarea{resize:vertical;min-height:90px;}
+  .form-group select option{background:var(--navy2);}
+  .btn-send{
+    width:100%;background:linear-gradient(135deg,var(--mint),var(--cyan));
+    border:none;color:var(--navy);padding:.85rem;border-radius:10px;
+    font-weight:700;font-size:1rem;cursor:pointer;transition:opacity .2s;
+    font-family:'Inter',sans-serif;letter-spacing:.5px;
+  }
+  .btn-send:hover{opacity:.88;}
+
+  /* ── FOOTER ── */
+  footer{
+    background:rgba(5,12,25,0.95);border-top:1px solid rgba(0,229,176,0.1);
+    text-align:center;padding:2rem;color:var(--gray);font-size:.82rem;
+  }
+  footer a{color:var(--mint);text-decoration:none;}
+
+  /* ── ORDER MODAL ── */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(5,12,25,0.92);z-index:9000;
+    display:none;align-items:center;justify-content:center;padding:1rem;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--navy2);border:1px solid rgba(0,229,176,0.25);
+    border-radius:20px;padding:2.5rem;max-width:520px;width:100%;
+    position:relative;animation:slideUp .3s ease;
+  }
+  @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+  .modal-close{
+    position:absolute;top:1rem;right:1rem;background:none;border:none;
+    color:var(--gray);cursor:pointer;font-size:1.4rem;transition:color .2s;
+  }
+  .modal-close:hover{color:var(--mint);}
+  .modal h3{font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;margin-bottom:.5rem;}
+  .modal-file-info{
+    background:rgba(0,229,176,0.05);border:1px solid rgba(0,229,176,0.15);
+    border-radius:10px;padding:1rem;margin:1rem 0;
+  }
+  .modal-file-title{font-weight:600;margin-bottom:.25rem;}
+  .modal-file-price{font-family:'Rajdhani',sans-serif;font-size:1.5rem;color:var(--mint);font-weight:700;}
+  .payment-box{
+    background:rgba(0,229,176,0.04);border:1px dashed rgba(0,229,176,0.3);
+    border-radius:10px;padding:1.2rem;margin:1rem 0;
+  }
+  .payment-box h4{font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mint);margin-bottom:.7rem;}
+  .ccp-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+  .ccp-label{font-size:.8rem;color:var(--gray);}
+  .ccp-number{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--white);letter-spacing:1px;}
+  .copy-btn{background:none;border:1px solid rgba(0,229,176,0.3);color:var(--mint);padding:.2rem .5rem;border-radius:5px;cursor:pointer;font-size:.75rem;transition:all .2s;}
+  .copy-btn:hover{background:var(--mint);color:var(--navy);}
+  .modal-steps{list-style:none;padding:0;margin:.8rem 0;}
+  .modal-steps li{font-size:.85rem;color:var(--gray);padding:.3rem 0;padding-left:1.2rem;position:relative;}
+  .modal-steps li::before{content:'→';position:absolute;left:0;color:var(--mint);}
+  .modal p.note{font-size:.8rem;color:var(--gray);margin-top:.5rem;line-height:1.5;}
+  .email-link{color:var(--mint);font-weight:600;}
+
+  /* ── ADMIN PANEL ── */
+  #admin-overlay{
+    position:fixed;inset:0;background:rgba(5,12,25,0.97);z-index:9500;
+    display:none;flex-direction:column;overflow-y:auto;
+  }
+  #admin-overlay.open{display:flex;}
+  .admin-header{
+    background:rgba(10,22,40,0.98);border-bottom:1px solid rgba(0,229,176,0.2);
+    padding:1rem clamp(1rem,4vw,2.5rem);display:flex;align-items:center;justify-content:space-between;
+    position:sticky;top:0;z-index:10;
+  }
+  .admin-title{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;}
+  .admin-title span{color:var(--mint);}
+  .btn-close-admin{background:none;border:1px solid rgba(255,255,255,.2);color:var(--white);padding:.4rem .9rem;border-radius:6px;cursor:pointer;font-size:.85rem;transition:all .2s;font-family:'Inter',sans-serif;}
+  .btn-close-admin:hover{border-color:var(--red);color:var(--red);}
+  .admin-body{padding:2rem clamp(1rem,4vw,2.5rem);flex:1;}
+  .admin-section{max-width:900px;margin:0 auto;}
+  .admin-card{background:var(--card);border:1px solid rgba(0,229,176,0.12);border-radius:16px;padding:1.8rem;margin-bottom:2rem;}
+  .admin-card h3{font-family:'Rajdhani',sans-serif;font-size:1.3rem;font-weight:700;margin-bottom:1.2rem;color:var(--mint);}
+  .add-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  .add-form-grid .full{grid-column:1/-1;}
+  .btn-add{
+    background:linear-gradient(135deg,var(--mint),var(--cyan));
+    border:none;color:var(--navy);padding:.75rem 1.5rem;border-radius:10px;
+    font-weight:700;font-size:.95rem;cursor:pointer;transition:opacity .2s;
+    font-family:'Inter',sans-serif;margin-top:.5rem;
+  }
+  .btn-add:hover{opacity:.85;}
+  .admin-file-list{display:flex;flex-direction:column;gap:.75rem;}
+  .admin-file-item{
+    background:rgba(10,22,40,0.7);border:1px solid rgba(0,229,176,0.1);
+    border-radius:10px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+  }
+  .admin-file-item .afi-info{flex:1;min-width:160px;}
+  .admin-file-item .afi-title{font-weight:600;font-size:.95rem;}
+  .admin-file-item .afi-meta{font-size:.78rem;color:var(--gray);margin-top:.2rem;}
+  .btn-delete{background:none;border:1px solid rgba(230,57,70,.3);color:#ff6b7a;padding:.35rem .7rem;border-radius:6px;cursor:pointer;font-size:.78rem;transition:all .2s;font-family:'Inter',sans-serif;}
+  .btn-delete:hover{background:rgba(230,57,70,.15);}
+  .btn-edit{background:none;border:1px solid rgba(0,229,176,.3);color:var(--mint);padding:.35rem .7rem;border-radius:6px;cursor:pointer;font-size:.78rem;transition:all .2s;font-family:'Inter',sans-serif;margin-right:.4rem;}
+  .btn-edit:hover{background:rgba(0,229,176,.1);}
+  .empty-admin{color:var(--gray);font-size:.9rem;padding:1rem 0;text-align:center;}
+
+  /* ── LOGIN MODAL ── */
+  #login-overlay{
+    position:fixed;inset:0;background:rgba(5,12,25,0.95);z-index:9200;
+    display:none;align-items:center;justify-content:center;
+  }
+  #login-overlay.open{display:flex;}
+  .login-box{
+    background:var(--navy2);border:1px solid rgba(0,229,176,0.25);
+    border-radius:20px;padding:2.5rem;max-width:360px;width:100%;margin:1rem;
+  }
+  .login-box h3{font-family:'Rajdhani',sans-serif;font-size:1.6rem;margin-bottom:.5rem;}
+  .login-box p{font-size:.85rem;color:var(--gray);margin-bottom:1.5rem;}
+  .login-error{color:#ff6b7a;font-size:.82rem;margin-top:.5rem;display:none;}
+  .btn-login{width:100%;background:linear-gradient(135deg,var(--mint),var(--cyan));border:none;color:var(--navy);padding:.85rem;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer;transition:opacity .2s;font-family:'Inter',sans-serif;margin-top:.5rem;}
+  .btn-login:hover{opacity:.88;}
+  .btn-cancel-login{width:100%;background:none;border:1px solid rgba(255,255,255,.15);color:var(--gray);padding:.7rem;border-radius:10px;font-weight:500;cursor:pointer;font-size:.9rem;font-family:'Inter',sans-serif;margin-top:.5rem;}
+  .btn-cancel-login:hover{border-color:rgba(255,255,255,.3);color:var(--white);}
+
+  /* ── TOAST ── */
+  .toast{
+    position:fixed;bottom:1.5rem;right:1.5rem;z-index:99999;
+    background:var(--mint);color:var(--navy);padding:.75rem 1.3rem;
+    border-radius:10px;font-weight:700;font-size:.9rem;
+    opacity:0;transform:translateY(20px);transition:all .3s;pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:translateY(0);}
+
+  /* ── MOBILE ── */
+  @media(max-width:768px){
+    .nav-links{display:none;position:absolute;top:64px;left:0;right:0;background:rgba(10,22,40,0.98);flex-direction:column;gap:0;border-bottom:1px solid rgba(0,229,176,.15);}
+    .nav-links.open{display:flex;}
+    .nav-links a,.btn-admin{padding:.9rem clamp(1rem,4vw,2rem);border-bottom:1px solid rgba(0,229,176,.08);}
+    .btn-admin{margin:0;border-radius:0;border:none;border-bottom:1px solid rgba(0,229,176,.08);width:100%;text-align:left;}
+    .hamburger{display:flex;}
+    .contact-grid{grid-template-columns:1fr;}
+    .add-form-grid{grid-template-columns:1fr;}
+    .add-form-grid .full{grid-column:1;}
+    .modal{padding:1.5rem;}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <a class="nav-logo" href="#home">
+    <div class="nav-logo-icon">🔬</div>
+    <div class="nav-logo-text">EPIT<span>RAC</span>KER</div>
+  </a>
+  <div class="nav-links" id="navLinks">
+    <a href="#home">Home</a>
+    <a href="#catalog">Catalog</a>
+    <a href="#how">How it Works</a>
+    <a href="#contact">Contact</a>
+    <button class="btn-admin" onclick="openLogin()">Admin ⚙</button>
+  </div>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section id="home">
+  <div class="hero-pulse"></div>
+  <div class="hero-badge">🟢 Live Catalog Active</div>
+  <h1>EPIT<span class="accent">RAC</span>KER<br>Global Disease <span class="accent">Files</span></h1>
+  <p class="hero-sub">Professional epidemiological reports, surveillance data, and medical research files — available on request. Browse our catalog and order directly.</p>
+
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search files by title, disease, region…" oninput="filterFiles()"/>
+  </div>
+  <div class="filter-row" id="filterRow">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All Files</button>
+    <button class="filter-btn" onclick="setFilter('pdf',this)">PDF Reports</button>
+    <button class="filter-btn" onclick="setFilter('ppt',this)">Presentations</button>
+    <button class="filter-btn" onclick="setFilter('xls',this)">Data / Excel</button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-num" id="totalCount">0</div><div class="stat-lbl">Files Listed</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-lbl">File Types</div></div>
+    <div class="stat"><div class="stat-num">24h</div><div class="stat-lbl">Delivery Time</div></div>
+  </div>
+</section>
+
+<!-- CATALOG -->
+<section id="catalog">
+  <div class="section-header">
+    <div class="eyebrow">Browse</div>
+    <h2>File <span>Catalog</span></h2>
+  </div>
+  <div class="files-grid" id="filesGrid"></div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-header">
+    <div class="eyebrow">Process</div>
+    <h2>How to <span>Order</span></h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">STEP 01</div>
+      <div class="step-icon">🔍</div>
+      <h3>Browse Catalog</h3>
+      <p>Search and filter our epidemiological file catalog to find the report or data file you need.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">STEP 02</div>
+      <div class="step-icon">💳</div>
+      <h3>Make Payment</h3>
+      <p>Transfer the file price to our CCP account. Keep your payment proof/screenshot.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">STEP 03</div>
+      <div class="step-icon">📧</div>
+      <h3>Send Proof</h3>
+      <p>Email us your payment proof and the file title to <strong>epitracker29@gmail.com</strong>.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">STEP 04</div>
+      <div class="step-icon">📁</div>
+      <h3>Receive File</h3>
+      <p>We verify and send your requested file directly to your email within 24 hours.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-header">
+    <div class="eyebrow">Get in Touch</div>
+    <h2>Contact <span>Us</span></h2>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-info">
+      <h3>EpiTracker</h3>
+      <p style="color:var(--gray);font-size:.9rem;line-height:1.7;margin-bottom:1.5rem;">
+        We provide professional epidemiological files for researchers, health workers, and institutions. All files are delivered securely via email after payment verification.
+      </p>
+      <div class="contact-item">
+        <div class="ci-icon">📧</div>
+        <div><a href="mailto:epitracker29@gmail.com">epitracker29@gmail.com</a></div>
+      </div>
+      <div class="contact-item">
+        <div class="ci-icon">💳</div>
+        <div><span>CCP Account: <strong id="ccpDisplay">Available on order page</strong></span></div>
+      </div>
+      <div class="contact-item">
+        <div class="ci-icon">⏱</div>
+        <div><span>Response within 24 hours</span></div>
+      </div>
+    </div>
+    <div class="contact-form-box">
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="cName" placeholder="Full name"/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="cEmail" placeholder="your@email.com"/>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="cSubject">
+          <option value="">Select subject</option>
+          <option>General Inquiry</option>
+          <option>File Request</option>
+          <option>Payment Issue</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea id="cMessage" placeholder="Your message…"></textarea>
+      </div>
+      <button class="btn-send" onclick="sendContact()">Send Message →</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p style="margin-bottom:.4rem;font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;color:var(--mint);">EPITRACKER</p>
+  <p>Global Disease File Catalog — <a href="mailto:epitracker29@gmail.com">epitracker29@gmail.com</a></p>
+  <p style="margin-top:.5rem;font-size:.75rem;opacity:.5;">© 2026 EpiTracker. All files are licensed and delivered securely.</p>
+</footer>
+
+<!-- ── ORDER MODAL ── -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('orderModal')">✕</button>
+    <h3>Order File</h3>
+    <p style="color:var(--gray);font-size:.85rem;">Follow the steps below to receive this file via email.</p>
+    <div class="modal-file-info">
+      <div class="modal-file-title" id="mTitle"></div>
+      <div style="font-size:.8rem;color:var(--gray);margin:.2rem 0" id="mType"></div>
+      <div class="modal-file-price" id="mPrice"></div>
+    </div>
+    <div class="payment-box">
+      <h4>💳 CCP Payment</h4>
+      <div class="ccp-row">
+        <span class="ccp-label">Account No:</span>
+        <span class="ccp-number" id="ccpNumber">0099999999 — clé 99</span>
+        <button class="copy-btn" onclick="copyCCP()">Copy</button>
+      </div>
+    </div>
+    <ul class="modal-steps">
+      <li>Transfer the exact price to the CCP account above</li>
+      <li>Take a screenshot or photo of your payment receipt</li>
+      <li>Email payment proof + this file title to <span class="email-link">epitracker29@gmail.com</span></li>
+      <li>We'll send the file to your email within 24 hours</li>
+    </ul>
+    <p class="note">Subject line: <em>"Order – [file title]"</em> — Include your email address in the message.</p>
+    <button class="btn-send" onclick="openMailto()" style="margin-top:1rem;">
+      📧 Open Email to Order
+    </button>
+  </div>
+</div>
+
+<!-- ── LOGIN MODAL ── -->
+<div id="login-overlay">
+  <div class="login-box">
+    <h3>Admin Login</h3>
+    <p>Enter your admin password to manage the catalog.</p>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="adminPass" placeholder="Admin password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <div class="login-error" id="loginError">Incorrect password. Try again.</div>
+    <button class="btn-login" onclick="doLogin()">Login →</button>
+    <button class="btn-cancel-login" onclick="closeLogin()">Cancel</button>
+  </div>
+</div>
+
+<!-- ── ADMIN PANEL ── -->
+<div id="admin-overlay">
+  <div class="admin-header">
+    <div class="admin-title">EPIT<span>RAC</span>KER — Admin Panel</div>
+    <button class="btn-close-admin" onclick="closeAdmin()">✕ Close</button>
+  </div>
+  <div class="admin-body">
+    <div class="admin-section">
+
+      <!-- CCP Settings -->
+      <div class="admin-card">
+        <h3>⚙ CCP Account Settings</h3>
+        <div class="add-form-grid">
+          <div class="form-group full">
+            <label>CCP Account Number (shown to buyers)</label>
+            <input type="text" id="adminCCPInput" placeholder="e.g. 0099999999 — clé 99"/>
+          </div>
+        </div>
+        <button class="btn-add" onclick="saveCCP()">💾 Save CCP</button>
+      </div>
+
+      <!-- Add File -->
+      <div class="admin-card">
+        <h3>➕ Add New File Listing</h3>
+        <div class="add-form-grid">
+          <div class="form-group">
+            <label>File Title</label>
+            <input type="text" id="newTitle" placeholder="e.g. COVID-19 Surveillance Report 2024"/>
+          </div>
+          <div class="form-group">
+            <label>File Type</label>
+            <select id="newType">
+              <option value="pdf">PDF Report</option>
+              <option value="ppt">PowerPoint Presentation</option>
+              <option value="xls">Excel / Data File</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Short Description</label>
+            <input type="text" id="newDesc" placeholder="Brief description of the file content"/>
+          </div>
+          <div class="form-group">
+            <label>Price (DZD)</label>
+            <input type="text" id="newPrice" placeholder="e.g. 1500 DZD"/>
+          </div>
+          <div class="form-group">
+            <label>Category / Tags (optional)</label>
+            <input type="text" id="newTags" placeholder="e.g. Africa, Cholera, WHO"/>
+          </div>
+        </div>
+        <button class="btn-add" onclick="addFile()">➕ Add to Catalog</button>
+      </div>
+
+      <!-- File List -->
+      <div class="admin-card">
+        <h3>📁 Current File Listings (<span id="adminCount">0</span>)</h3>
+        <div class="admin-file-list" id="adminFileList">
+          <div class="empty-admin">No files added yet.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ──────────────────────────────────────────
+//  DATA STORE (localStorage)
+// ──────────────────────────────────────────
+const ADMIN_PASS = "Epi@Admin2026";
+const LS_FILES = "epitracker_files";
+const LS_CCP   = "epitracker_ccp";
+
+let files = JSON.parse(localStorage.getItem(LS_FILES) || "[]");
+let ccp   = localStorage.getItem(LS_CCP) || "0099999999 — clé 99";
+let activeFilter = "all";
+let currentOrderFile = null;
+
+function saveFiles(){ localStorage.setItem(LS_FILES, JSON.stringify(files)); }
+
+// ──────────────────────────────────────────
+//  RENDER CATALOG
+// ──────────────────────────────────────────
+function renderCatalog(){
+  const q = (document.getElementById("searchInput")?.value||"").toLowerCase();
+  const grid = document.getElementById("filesGrid");
+  document.getElementById("totalCount").textContent = files.length;
+
+  let filtered = files.filter(f => {
+    const matchType = activeFilter === "all" || f.type === activeFilter;
+    const matchQ = !q || f.title.toLowerCase().includes(q) || f.desc.toLowerCase().includes(q) || (f.tags||"").toLowerCase().includes(q);
+    return matchType && matchQ;
+  });
+
+  if(!filtered.length){
+    grid.innerHTML = '<div class="no-results">🔬 No files found. Try a different search or filter.</div>';
+    return;
+  }
+
+  const typeLabel = {pdf:"PDF",ppt:"PPT",xls:"XLS"};
+  const typeIcon  = {pdf:"📄",ppt:"📊",xls:"📈"};
+
+  grid.innerHTML = filtered.map((f,i) => `
+    <div class="file-card" onclick="openOrder(${files.indexOf(f)})">
+      <div class="file-type-badge badge-${f.type}">${typeIcon[f.type]} ${typeLabel[f.type]}</div>
+      <div class="file-title">${f.title}</div>
+      <div class="file-desc">${f.desc||'Epidemiological data file available on request.'}</div>
+      ${f.tags ? `<div style="font-size:.75rem;color:var(--mint);margin-bottom:.5rem;opacity:.7;">🏷 ${f.tags}</div>` : ""}
+      <div class="file-meta">
+        <div class="file-price">${f.price||"Contact for price"}</div>
+        <button class="btn-order">Order →</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function filterFiles(){ renderCatalog(); }
+function setFilter(type, btn){
+  activeFilter = type;
+  document.querySelectorAll(".filter-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderCatalog();
+}
+
+// ──────────────────────────────────────────
+//  ORDER MODAL
+// ──────────────────────────────────────────
+function openOrder(idx){
+  currentOrderFile = files[idx];
+  const f = currentOrderFile;
+  document.getElementById("mTitle").textContent = f.title;
+  document.getElementById("mType").textContent = {pdf:"PDF Report",ppt:"PowerPoint Presentation",xls:"Excel / Data File"}[f.type]||f.type;
+  document.getElementById("mPrice").textContent = f.price||"Contact for price";
+  document.getElementById("ccpNumber").textContent = ccp;
+  document.getElementById("orderModal").classList.add("open");
+  document.body.style.overflow="hidden";
+}
+function closeModal(id){ document.getElementById(id).classList.remove("open"); document.body.style.overflow=""; }
+function copyCCP(){
+  navigator.clipboard?.writeText(ccp).then(()=>toast("CCP copied!")).catch(()=>{});
+}
+function openMailto(){
+  const f = currentOrderFile;
+  const sub = encodeURIComponent("Order – " + (f?.title||"File"));
+  const body = encodeURIComponent(`Hello EpiTracker,\n\nI would like to order the following file:\n\nTitle: ${f?.title||""}\nPrice: ${f?.price||""}\n\nI have made the CCP payment. Please find proof attached.\n\nMy email: [your email here]\n\nThank you.`);
+  window.location.href = `mailto:epitracker29@gmail.com?subject=${sub}&body=${body}`;
+}
+
+// ──────────────────────────────────────────
+//  CONTACT FORM
+// ──────────────────────────────────────────
+function sendContact(){
+  const name = document.getElementById("cName").value.trim();
+  const email = document.getElementById("cEmail").value.trim();
+  const subj = document.getElementById("cSubject").value;
+  const msg  = document.getElementById("cMessage").value.trim();
+  if(!name||!email||!subj||!msg){ toast("Please fill all fields."); return; }
+  const s = encodeURIComponent(subj + " – " + name);
+  const b = encodeURIComponent(`From: ${name} (${email})\n\n${msg}`);
+  window.location.href = `mailto:epitracker29@gmail.com?subject=${s}&body=${b}`;
+  toast("Opening email client…");
+}
+
+// ──────────────────────────────────────────
+//  LOGIN
+// ──────────────────────────────────────────
+function openLogin(){
+  document.getElementById("adminPass").value="";
+  document.getElementById("loginError").style.display="none";
+  document.getElementById("login-overlay").classList.add("open");
+  document.body.style.overflow="hidden";
+  setTimeout(()=>document.getElementById("adminPass").focus(),100);
+}
+function closeLogin(){
+  document.getElementById("login-overlay").classList.remove("open");
+  document.body.style.overflow="";
+}
+function doLogin(){
+  const p = document.getElementById("adminPass").value;
+  if(p === ADMIN_PASS){
+    closeLogin();
+    openAdmin();
+  } else {
+    document.getElementById("loginError").style.display="block";
+    document.getElementById("adminPass").value="";
+    document.getElementById("adminPass").focus();
+  }
+}
+
+// ──────────────────────────────────────────
+//  ADMIN PANEL
+// ──────────────────────────────────────────
+function openAdmin(){
+  document.getElementById("adminCCPInput").value = ccp;
+  renderAdmin();
+  document.getElementById("admin-overlay").classList.add("open");
+  document.body.style.overflow="hidden";
+}
+function closeAdmin(){
+  document.getElementById("admin-overlay").classList.remove("open");
+  document.body.style.overflow="";
+}
+function saveCCP(){
+  const val = document.getElementById("adminCCPInput").value.trim();
+  if(!val){ toast("Enter CCP number."); return; }
+  ccp = val;
+  localStorage.setItem(LS_CCP, ccp);
+  document.getElementById("ccpDisplay").textContent = ccp;
+  toast("CCP saved!");
+}
+function addFile(){
+  const title = document.getElementById("newTitle").value.trim();
+  const type  = document.getElementById("newType").value;
+  const desc  = document.getElementById("newDesc").value.trim();
+  const price = document.getElementById("newPrice").value.trim();
+  const tags  = document.getElementById("newTags").value.trim();
+  if(!title){ toast("Title is required."); return; }
+  files.unshift({ id: Date.now(), title, type, desc, price, tags });
+  saveFiles();
+  document.getElementById("newTitle").value="";
+  document.getElementById("newDesc").value="";
+  document.getElementById("newPrice").value="";
+  document.getElementById("newTags").value="";
+  renderAdmin();
+  renderCatalog();
+  toast("File added to catalog!");
+}
+function deleteFile(id){
+  if(!confirm("Delete this file listing?")) return;
+  files = files.filter(f=>f.id!==id);
+  saveFiles();
+  renderAdmin();
+  renderCatalog();
+  toast("File removed.");
+}
+function editFile(id){
+  const f = files.find(x=>x.id===id);
+  if(!f) return;
+  const newTitle = prompt("Edit title:", f.title);
+  if(newTitle===null) return;
+  const newPrice = prompt("Edit price:", f.price);
+  if(newPrice===null) return;
+  const newDesc = prompt("Edit description:", f.desc);
+  if(newDesc===null) return;
+  f.title = newTitle.trim()||f.title;
+  f.price = newPrice.trim()||f.price;
+  f.desc  = newDesc.trim()||f.desc;
+  saveFiles();
+  renderAdmin();
+  renderCatalog();
+  toast("File updated.");
+}
+function renderAdmin(){
+  const typeLabel = {pdf:"PDF",ppt:"PPT",xls:"XLS"};
+  document.getElementById("adminCount").textContent = files.length;
+  const list = document.getElementById("adminFileList");
+  if(!files.length){ list.innerHTML='<div class="empty-admin">No files yet. Add your first listing above.</div>'; return; }
+  list.innerHTML = files.map(f => `
+    <div class="admin-file-item">
+      <div class="afi-info">
+        <div class="afi-title">${f.title}</div>
+        <div class="afi-meta">${typeLabel[f.type]||f.type} · ${f.price||'No price'} ${f.tags?'· '+f.tags:''}</div>
+      </div>
+      <button class="btn-edit" onclick="editFile(${f.id})">✏ Edit</button>
+      <button class="btn-delete" onclick="deleteFile(${f.id})">🗑 Delete</button>
+    </div>
+  `).join("");
+}
+
+// ──────────────────────────────────────────
+//  TOAST
+// ──────────────────────────────────────────
+let toastTimer;
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove("show"), 2500);
+}
+
+// ──────────────────────────────────────────
+//  HAMBURGER
+// ──────────────────────────────────────────
+document.getElementById("hamburger").onclick = function(){
+  document.getElementById("navLinks").classList.toggle("open");
+};
+document.querySelectorAll("#navLinks a").forEach(a=>{
+  a.addEventListener("click",()=>document.getElementById("navLinks").classList.remove("open"));
+});
+
+// ──────────────────────────────────────────
+//  INIT
+// ──────────────────────────────────────────
+renderCatalog();
+document.getElementById("ccpDisplay").textContent = ccp;
+</script>
+</body>
+</html>
